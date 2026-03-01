@@ -446,6 +446,636 @@ function startQuizGame() {
     showQuestion();
 }
 
+// 语音练习相关变量
+let voicePracticeState = {
+    mode: 'easy',
+    currentIndex: 0,
+    questions: [],
+    coins: 0,
+    streak: 0,
+    recognition: null
+};
+
+// 初始化语音识别
+function initSpeechRecognition() {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        voicePracticeState.recognition = new SpeechRecognition();
+        voicePracticeState.recognition.lang = 'en-US';
+        voicePracticeState.recognition.continuous = false;
+        voicePracticeState.recognition.interimResults = false;
+        
+        voicePracticeState.recognition.onresult = function(event) {
+            const spoken = event.results[0][0].transcript.toLowerCase().trim();
+            handleVoiceResult(spoken);
+        };
+        
+        voicePracticeState.recognition.onerror = function(event) {
+            console.error('语音识别错误:', event.error);
+            document.getElementById('voice-status').textContent = '识别失败，请再试一次';
+            document.getElementById('mic-btn').classList.remove('listening');
+        };
+        
+        voicePracticeState.recognition.onend = function() {
+            document.getElementById('mic-btn').classList.remove('listening');
+        };
+    } else {
+        alert('您的浏览器不支持语音识别功能，请使用Chrome浏览器');
+    }
+}
+
+// 开始语音练习
+function startVoicePractice(mode) {
+    voicePracticeState.mode = mode;
+    voicePracticeState.currentIndex = 0;
+    voicePracticeState.coins = 0;
+    voicePracticeState.streak = 0;
+    
+    // 生成题目
+    if (mode === 'easy') {
+        voicePracticeState.questions = [...alphabetData.vowels, ...alphabetData.consonants1, 
+                                        ...alphabetData.consonants2, ...alphabetData.consonants3, 
+                                        ...alphabetData.consonants4].map(item => ({
+            type: 'letter',
+            letter: item.letter,
+            phonetic: item.phonetic,
+            word: item.word,
+            target: item.letter.toLowerCase()
+        }));
+    } else {
+        voicePracticeState.questions = [...alphabetData.vowels, ...alphabetData.consonants1, 
+                                        ...alphabetData.consonants2, ...alphabetData.consonants3, 
+                                        ...alphabetData.consonants4].map(item => ({
+            type: 'phonetic',
+            letter: item.letter,
+            phonetic: item.phonetic,
+            word: item.word,
+            target: item.word.toLowerCase()
+        }));
+    }
+    
+    // 随机打乱题目
+    voicePracticeState.questions.sort(() => Math.random() - 0.5);
+    
+    // 只取前10题
+    voicePracticeState.questions = voicePracticeState.questions.slice(0, 10);
+    
+    // 更新UI
+    document.getElementById('practice-level').textContent = mode === 'easy' ? '简单模式' : '中等模式';
+    document.getElementById('current-coins').textContent = voicePracticeState.coins;
+    document.getElementById('streak-count').textContent = '0';
+    
+    // 显示第一题
+    showCurrentQuestion();
+    
+    // 切换到语音练习页面
+    showPage('voice-practice');
+    
+    // 初始化语音识别
+    initSpeechRecognition();
+}
+
+// 显示当前题目
+function showCurrentQuestion() {
+    const question = voicePracticeState.questions[voicePracticeState.currentIndex];
+    
+    document.getElementById('target-letter').textContent = question.letter;
+    document.getElementById('target-phonetic').textContent = question.phonetic;
+    document.getElementById('target-word').textContent = question.word;
+    document.getElementById('practice-progress').textContent = `${voicePracticeState.currentIndex + 1}/10`;
+    
+    // 重置反馈区域
+    document.getElementById('feedback-section').classList.remove('show', 'correct', 'incorrect');
+    document.getElementById('voice-status').textContent = '点击麦克风开始跟读';
+    
+    // 自动播放发音
+    setTimeout(() => {
+        playCurrentSound();
+    }, 500);
+}
+
+// 播放当前发音
+function playCurrentSound() {
+    const question = voicePracticeState.questions[voicePracticeState.currentIndex];
+    
+    if (voicePracticeState.mode === 'easy') {
+        speak(question.letter);
+        setTimeout(() => speak(question.phonetic), 800);
+        setTimeout(() => speak(question.word), 1600);
+    } else {
+        speak(question.phonetic);
+        setTimeout(() => speak(question.word), 800);
+    }
+}
+
+// 开始语音输入
+function startVoiceInput() {
+    if (!voicePracticeState.recognition) {
+        alert('语音识别未初始化，请刷新页面重试');
+        return;
+    }
+    
+    document.getElementById('mic-btn').classList.add('listening');
+    document.getElementById('voice-status').textContent = '正在听...请跟读';
+    
+    try {
+        voicePracticeState.recognition.start();
+    } catch (e) {
+        voicePracticeState.recognition.stop();
+        setTimeout(() => {
+            voicePracticeState.recognition.start();
+        }, 100);
+    }
+}
+
+// 处理语音结果
+function handleVoiceResult(spoken) {
+    const question = voicePracticeState.questions[voicePracticeState.currentIndex];
+    const feedbackSection = document.getElementById('feedback-section');
+    const feedbackIcon = feedbackSection.querySelector('.feedback-icon');
+    const feedbackText = feedbackSection.querySelector('.feedback-text');
+    const accuracyFill = feedbackSection.querySelector('.accuracy-fill');
+    
+    // 计算准确度
+    const accuracy = calculateAccuracy(spoken, question.target);
+    
+    feedbackSection.classList.add('show');
+    accuracyFill.style.width = accuracy + '%';
+    
+    if (accuracy >= 80) {
+        feedbackSection.classList.add('correct');
+        feedbackIcon.textContent = '✅';
+        feedbackText.textContent = '太棒了！发音正确！';
+        
+        let reward = 10;
+        if (accuracy >= 90) reward += 5;
+        
+        voicePracticeState.streak++;
+        if (voicePracticeState.streak >= 3) {
+            reward += 20;
+            feedbackText.textContent += ' 🔥 连对3题！额外+20金币！';
+        }
+        
+        voicePracticeState.coins += reward;
+        document.getElementById('current-coins').textContent = voicePracticeState.coins;
+        document.getElementById('streak-count').textContent = voicePracticeState.streak;
+        
+        animateCoins(reward);
+        speak('Excellent!');
+        
+        setTimeout(() => {
+            nextQuestion();
+        }, 2000);
+    } else {
+        feedbackSection.classList.add('incorrect');
+        feedbackIcon.textContent = '❌';
+        feedbackText.textContent = `你读的是: "${spoken}"，再试一次！`;
+        
+        voicePracticeState.streak = 0;
+        document.getElementById('streak-count').textContent = '0';
+        
+        speak('Try again!');
+    }
+}
+
+// 计算发音准确度
+function calculateAccuracy(spoken, target) {
+    const longer = spoken.length > target.length ? spoken : target;
+    const shorter = spoken.length > target.length ? target : spoken;
+    
+    if (longer.length === 0) return 100;
+    
+    const costs = [];
+    for (let i = 0; i <= shorter.length; i++) {
+        let lastValue = i;
+        for (let j = 0; j <= longer.length; j++) {
+            if (i === 0) {
+                costs[j] = j;
+            } else if (j > 0) {
+                let newValue = costs[j - 1];
+                if (shorter[i - 1] !== longer[j - 1]) {
+                    newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                }
+                costs[j - 1] = lastValue;
+                lastValue = newValue;
+            }
+        }
+        costs[longer.length] = lastValue;
+    }
+    
+    const distance = costs[longer.length];
+    const similarity = ((longer.length - distance) / longer.length) * 100;
+    return Math.round(similarity);
+}
+
+// 金币动画
+function animateCoins(amount) {
+    const coinDisplay = document.querySelector('.coin-display');
+    const rect = coinDisplay.getBoundingClientRect();
+    
+    for (let i = 0; i < Math.min(amount / 5, 5); i++) {
+        setTimeout(() => {
+            const coin = document.createElement('div');
+            coin.className = 'coin-animation';
+            coin.textContent = '🪙';
+            coin.style.left = (rect.left + Math.random() * 50) + 'px';
+            coin.style.top = (rect.top + 100) + 'px';
+            document.body.appendChild(coin);
+            
+            setTimeout(() => {
+                coin.remove();
+            }, 1000);
+        }, i * 100);
+    }
+}
+
+// 下一题
+function nextQuestion() {
+    voicePracticeState.currentIndex++;
+    
+    if (voicePracticeState.currentIndex >= voicePracticeState.questions.length) {
+        showCompletionModal();
+    } else {
+        showCurrentQuestion();
+    }
+}
+
+// 显示完成弹窗
+function showCompletionModal() {
+    const modal = document.getElementById('completion-modal');
+    const sessionCoins = document.getElementById('session-coins');
+    const totalCoinsDisplay = document.getElementById('total-coins-display');
+    const badgeEarned = document.getElementById('badge-earned');
+    
+    sessionCoins.textContent = voicePracticeState.coins;
+    
+    userProgress.score += voicePracticeState.coins;
+    saveProgress();
+    totalCoinsDisplay.textContent = userProgress.score;
+    
+    let badge = '';
+    if (voicePracticeState.coins >= 150) {
+        badge = '🏆 发音大师';
+    } else if (voicePracticeState.coins >= 100) {
+        badge = '🥇 发音高手';
+    } else if (voicePracticeState.coins >= 50) {
+        badge = '🥈 发音达人';
+    } else {
+        badge = '🥉 发音新手';
+    }
+    badgeEarned.textContent = `获得徽章：${badge}`;
+    
+    modal.classList.remove('hidden');
+    
+    createConfetti();
+    speak('Congratulations! You did a great job!');
+}
+
+// 创建彩带效果
+function createConfetti() {
+    const container = document.querySelector('.confetti-container');
+    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9', '#fd79a8'];
+    
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 2 + 's';
+        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+        container.appendChild(confetti);
+        
+        setTimeout(() => {
+            confetti.remove();
+        }, 3000);
+    }
+}
+
+// 重新开始语音练习
+function restartVoicePractice() {
+    document.getElementById('completion-modal').classList.add('hidden');
+    startVoicePractice(voicePracticeState.mode);
+}
+
+// 语音练习相关变量
+let voicePracticeState = {
+    mode: 'easy',
+    currentIndex: 0,
+    questions: [],
+    coins: 0,
+    streak: 0,
+    recognition: null
+};
+
+// 初始化语音识别
+function initSpeechRecognition() {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        voicePracticeState.recognition = new SpeechRecognition();
+        voicePracticeState.recognition.lang = 'en-US';
+        voicePracticeState.recognition.continuous = false;
+        voicePracticeState.recognition.interimResults = false;
+        
+        voicePracticeState.recognition.onresult = function(event) {
+            const spoken = event.results[0][0].transcript.toLowerCase().trim();
+            handleVoiceResult(spoken);
+        };
+        
+        voicePracticeState.recognition.onerror = function(event) {
+            console.error('语音识别错误:', event.error);
+            document.getElementById('voice-status').textContent = '识别失败，请再试一次';
+            document.getElementById('mic-btn').classList.remove('listening');
+        };
+        
+        voicePracticeState.recognition.onend = function() {
+            document.getElementById('mic-btn').classList.remove('listening');
+        };
+    } else {
+        alert('您的浏览器不支持语音识别功能，请使用Chrome浏览器');
+    }
+}
+
+// 开始语音练习
+function startVoicePractice(mode) {
+    voicePracticeState.mode = mode;
+    voicePracticeState.currentIndex = 0;
+    voicePracticeState.coins = 0;
+    voicePracticeState.streak = 0;
+    
+    // 生成题目
+    if (mode === 'easy') {
+        voicePracticeState.questions = [...alphabetData.vowels, ...alphabetData.consonants1, 
+                                        ...alphabetData.consonants2, ...alphabetData.consonants3, 
+                                        ...alphabetData.consonants4].map(item => ({
+            type: 'letter',
+            letter: item.letter,
+            phonetic: item.phonetic,
+            word: item.word,
+            target: item.letter.toLowerCase()
+        }));
+    } else {
+        voicePracticeState.questions = [...alphabetData.vowels, ...alphabetData.consonants1, 
+                                        ...alphabetData.consonants2, ...alphabetData.consonants3, 
+                                        ...alphabetData.consonants4].map(item => ({
+            type: 'phonetic',
+            letter: item.letter,
+            phonetic: item.phonetic,
+            word: item.word,
+            target: item.word.toLowerCase()
+        }));
+    }
+    
+    // 随机打乱题目
+    voicePracticeState.questions.sort(() => Math.random() - 0.5);
+    
+    // 只取前10题
+    voicePracticeState.questions = voicePracticeState.questions.slice(0, 10);
+    
+    // 更新UI
+    document.getElementById('practice-level').textContent = mode === 'easy' ? '简单模式' : '中等模式';
+    document.getElementById('current-coins').textContent = voicePracticeState.coins;
+    document.getElementById('streak-count').textContent = '0';
+    
+    // 显示第一题
+    showCurrentQuestion();
+    
+    // 切换到语音练习页面
+    showPage('voice-practice');
+    
+    // 初始化语音识别
+    initSpeechRecognition();
+}
+
+// 显示当前题目
+function showCurrentQuestion() {
+    const question = voicePracticeState.questions[voicePracticeState.currentIndex];
+    
+    document.getElementById('target-letter').textContent = question.letter;
+    document.getElementById('target-phonetic').textContent = question.phonetic;
+    document.getElementById('target-word').textContent = question.word;
+    document.getElementById('practice-progress').textContent = `${voicePracticeState.currentIndex + 1}/10`;
+    
+    // 重置反馈区域
+    document.getElementById('feedback-section').classList.remove('show', 'correct', 'incorrect');
+    document.getElementById('voice-status').textContent = '点击麦克风开始跟读';
+    
+    // 自动播放发音
+    setTimeout(() => {
+        playCurrentSound();
+    }, 500);
+}
+
+// 播放当前发音
+function playCurrentSound() {
+    const question = voicePracticeState.questions[voicePracticeState.currentIndex];
+    
+    if (voicePracticeState.mode === 'easy') {
+        speak(question.letter);
+        setTimeout(() => speak(question.phonetic), 800);
+        setTimeout(() => speak(question.word), 1600);
+    } else {
+        speak(question.phonetic);
+        setTimeout(() => speak(question.word), 800);
+    }
+}
+
+// 开始语音输入
+function startVoiceInput() {
+    if (!voicePracticeState.recognition) {
+        alert('语音识别未初始化，请刷新页面重试');
+        return;
+    }
+    
+    document.getElementById('mic-btn').classList.add('listening');
+    document.getElementById('voice-status').textContent = '正在听...请跟读';
+    
+    try {
+        voicePracticeState.recognition.start();
+    } catch (e) {
+        voicePracticeState.recognition.stop();
+        setTimeout(() => {
+            voicePracticeState.recognition.start();
+        }, 100);
+    }
+}
+
+// 处理语音结果
+function handleVoiceResult(spoken) {
+    const question = voicePracticeState.questions[voicePracticeState.currentIndex];
+    const feedbackSection = document.getElementById('feedback-section');
+    const feedbackIcon = feedbackSection.querySelector('.feedback-icon');
+    const feedbackText = feedbackSection.querySelector('.feedback-text');
+    const accuracyFill = feedbackSection.querySelector('.accuracy-fill');
+    
+    // 计算准确度
+    const accuracy = calculateAccuracy(spoken, question.target);
+    
+    feedbackSection.classList.add('show');
+    accuracyFill.style.width = accuracy + '%';
+    
+    if (accuracy >= 80) {
+        // 正确
+        feedbackSection.classList.add('correct');
+        feedbackIcon.textContent = '✅';
+        feedbackText.textContent = '太棒了！发音正确！';
+        
+        // 增加金币
+        let reward = 10;
+        if (accuracy >= 90) reward += 5;
+        
+        voicePracticeState.streak++;
+        if (voicePracticeState.streak >= 3) {
+            reward += 20;
+            feedbackText.textContent += ' 🔥 连对3题！额外+20金币！';
+        }
+        
+        voicePracticeState.coins += reward;
+        document.getElementById('current-coins').textContent = voicePracticeState.coins;
+        document.getElementById('streak-count').textContent = voicePracticeState.streak;
+        
+        // 金币动画
+        animateCoins(reward);
+        
+        // 播放鼓励语音
+        speak('Excellent!');
+        
+        // 下一题
+        setTimeout(() => {
+            nextQuestion();
+        }, 2000);
+    } else {
+        // 错误
+        feedbackSection.classList.add('incorrect');
+        feedbackIcon.textContent = '❌';
+        feedbackText.textContent = `你读的是: "${spoken}"，再试一次！`;
+        
+        voicePracticeState.streak = 0;
+        document.getElementById('streak-count').textContent = '0';
+        
+        speak('Try again!');
+    }
+}
+
+// 计算发音准确度
+function calculateAccuracy(spoken, target) {
+    const longer = spoken.length > target.length ? spoken : target;
+    const shorter = spoken.length > target.length ? target : spoken;
+    
+    if (longer.length === 0) return 100;
+    
+    const costs = [];
+    for (let i = 0; i <= shorter.length; i++) {
+        let lastValue = i;
+        for (let j = 0; j <= longer.length; j++) {
+            if (i === 0) {
+                costs[j] = j;
+            } else if (j > 0) {
+                let newValue = costs[j - 1];
+                if (shorter[i - 1] !== longer[j - 1]) {
+                    newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                }
+                costs[j - 1] = lastValue;
+                lastValue = newValue;
+            }
+        }
+        costs[longer.length] = lastValue;
+    }
+    
+    const distance = costs[longer.length];
+    const similarity = ((longer.length - distance) / longer.length) * 100;
+    return Math.round(similarity);
+}
+
+// 金币动画
+function animateCoins(amount) {
+    const coinDisplay = document.querySelector('.coin-display');
+    const rect = coinDisplay.getBoundingClientRect();
+    
+    for (let i = 0; i < Math.min(amount / 5, 5); i++) {
+        setTimeout(() => {
+            const coin = document.createElement('div');
+            coin.className = 'coin-animation';
+            coin.textContent = '🪙';
+            coin.style.left = (rect.left + Math.random() * 50) + 'px';
+            coin.style.top = (rect.top + 100) + 'px';
+            document.body.appendChild(coin);
+            
+            setTimeout(() => {
+                coin.remove();
+            }, 1000);
+        }, i * 100);
+    }
+}
+
+// 下一题
+function nextQuestion() {
+    voicePracticeState.currentIndex++;
+    
+    if (voicePracticeState.currentIndex >= voicePracticeState.questions.length) {
+        showCompletionModal();
+    } else {
+        showCurrentQuestion();
+    }
+}
+
+// 显示完成弹窗
+function showCompletionModal() {
+    const modal = document.getElementById('completion-modal');
+    const sessionCoins = document.getElementById('session-coins');
+    const totalCoinsDisplay = document.getElementById('total-coins-display');
+    const badgeEarned = document.getElementById('badge-earned');
+    
+    sessionCoins.textContent = voicePracticeState.coins;
+    
+    userProgress.score += voicePracticeState.coins;
+    saveProgress();
+    totalCoinsDisplay.textContent = userProgress.score;
+    
+    let badge = '';
+    if (voicePracticeState.coins >= 150) {
+        badge = '🏆 发音大师';
+    } else if (voicePracticeState.coins >= 100) {
+        badge = '🥇 发音高手';
+    } else if (voicePracticeState.coins >= 50) {
+        badge = '🥈 发音达人';
+    } else {
+        badge = '🥉 发音新手';
+    }
+    badgeEarned.textContent = `获得徽章：${badge}`;
+    
+    modal.classList.remove('hidden');
+    
+    createConfetti();
+    
+    speak('Congratulations! You did a great job!');
+}
+
+// 创建彩带效果
+function createConfetti() {
+    const container = document.querySelector('.confetti-container');
+    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9', '#fd79a8'];
+    
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 2 + 's';
+        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+        container.appendChild(confetti);
+        
+        setTimeout(() => {
+            confetti.remove();
+        }, 3000);
+    }
+}
+
+// 重新开始语音练习
+function restartVoicePractice() {
+    document.getElementById('completion-modal').classList.add('hidden');
+    startVoicePractice(voicePracticeState.mode);
+}
+
 function resetGame() {
     document.getElementById('game-area').classList.add('hidden');
     document.getElementById('game-area').innerHTML = '';

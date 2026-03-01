@@ -107,6 +107,16 @@
                     <h2>🎮 趣味练习</h2>
 
                     <div class="game-selection">
+                        <div class="game-card" onclick="startVoicePractice('easy')">
+                            <h3>🎤 语音练习（简单）</h3>
+                            <p>跟着读字母发音</p>
+                        </div>
+
+                        <div class="game-card" onclick="startVoicePractice('medium')">
+                            <h3>🎯 语音练习（中等）</h3>
+                            <p>音标配对练习</p>
+                        </div>
+
                         <div class="game-card" onclick="startGame('matching')">
                             <h3>🔤 字母配对</h3>
                             <p>找出相同的字母</p>
@@ -124,6 +134,68 @@
                     </div>
 
                     <div id="game-area" class="game-area hidden"></div>
+                </div>
+            </section>
+
+            <section id="voice-practice-page" class="page">
+                <div class="voice-practice-container">
+                    <div class="practice-header">
+                        <button class="back-btn" onclick="showPage('practice')">← 返回</button>
+                        <div class="level-info">
+                            <span id="practice-level">简单模式</span>
+                            <span id="practice-progress">1/10</span>
+                        </div>
+                        <div class="coin-display">
+                            🪙 <span id="current-coins">0</span>
+                        </div>
+                    </div>
+
+                    <div class="practice-card">
+                        <div class="target-letter" id="target-letter">A</div>
+                        <div class="target-phonetic" id="target-phonetic">/æ/</div>
+                        <div class="target-word" id="target-word">apple</div>
+                        
+                        <div class="audio-controls">
+                            <button class="audio-btn" onclick="playCurrentSound()">
+                                🔊 听发音
+                            </button>
+                        </div>
+
+                        <div class="voice-input-section">
+                            <button class="mic-btn" id="mic-btn" onclick="startVoiceInput()">
+                                🎤
+                                <span>按住跟读</span>
+                            </button>
+                            <div class="voice-status" id="voice-status">点击麦克风开始跟读</div>
+                        </div>
+
+                        <div class="feedback-section" id="feedback-section">
+                            <div class="feedback-icon"></div>
+                            <div class="feedback-text"></div>
+                            <div class="accuracy-bar">
+                                <div class="accuracy-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="streak-display" id="streak-display">
+                        🔥 连对 <span id="streak-count">0</span> 题
+                    </div>
+
+                    <div class="completion-modal hidden" id="completion-modal">
+                        <div class="modal-content">
+                            <div class="trophy">🏆</div>
+                            <h2>恭喜完成！</h2>
+                            <div class="final-score">
+                                <p>本次获得金币：<span id="session-coins">0</span></p>
+                                <p>总金币：<span id="total-coins-display">0</span></p>
+                            </div>
+                            <div class="badge-earned" id="badge-earned"></div>
+                            <div class="confetti-container"></div>
+                            <button class="restart-btn" onclick="restartVoicePractice()">再玩一次</button>
+                            <button class="home-btn" onclick="showPage('home')">返回首页</button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
