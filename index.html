@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>七天学英文拼音</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 七天学英文拼音</h1>
+            <p class="subtitle">让孩子轻松掌握26个字母发音</p>
+        </header>
+
+        <nav class="main-nav">
+            <button class="nav-btn active" data-page="home">🏠 首页</button>
+            <button class="nav-btn" data-page="lessons">📚 课程</button>
+            <button class="nav-btn" data-page="practice">🎮 练习</button>
+            <button class="nav-btn" data-page="progress">📊 进度</button>
+        </nav>
+
+        <main>
+            <section id="home-page" class="page active">
+                <div class="welcome-section">
+                    <h2>欢迎来到七天学英文拼音！</h2>
+                    <p>通过有趣的学习方式，让孩子在7天内掌握26个英文字母的发音和拼读。</p>
+                </div>
+
+                <div class="days-grid">
+                    <div class="day-card" data-day="1">
+                        <div class="day-number">第1天</div>
+                        <h3>元音字母基础</h3>
+                        <p>学习 A, E, I, O, U</p>
+                        <button class="start-btn" onclick="startLesson(1)">开始学习</button>
+                    </div>
+
+                    <div class="day-card" data-day="2">
+                        <div class="day-number">第2天</div>
+                        <h3>辅音字母（一）</h3>
+                        <p>学习 B, C, D, F, G</p>
+                        <button class="start-btn" onclick="startLesson(2)">开始学习</button>
+                    </div>
+
+                    <div class="day-card" data-day="3">
+                        <div class="day-number">第3天</div>
+                        <h3>辅音字母（二）</h3>
+                        <p>学习 H, J, K, L, M</p>
+                        <button class="start-btn" onclick="startLesson(3)">开始学习</button>
+                    </div>
+
+                    <div class="day-card" data-day="4">
+                        <div class="day-number">第4天</div>
+                        <h3>辅音字母（三）</h3>
+                        <p>学习 N, P, Q, R, S</p>
+                        <button class="start-btn" onclick="startLesson(4)">开始学习</button>
+                    </div>
+
+                    <div class="day-card" data-day="5">
+                        <div class="day-number">第5天</div>
+                        <h3>辅音字母（四）</h3>
+                        <p>学习 T, V, W, X, Y, Z</p>
+                        <button class="start-btn" onclick="startLesson(5)">开始学习</button>
+                    </div>
+
+                    <div class="day-card" data-day="6">
+                        <div class="day-number">第6天</div>
+                        <h3>单词拼读实战</h3>
+                        <p>运用所学拼读单词</p>
+                        <button class="start-btn" onclick="startLesson(6)">开始学习</button>
+                    </div>
+
+                    <div class="day-card" data-day="7">
+                        <div class="day-number">第7天</div>
+                        <h3>综合测试</h3>
+                        <p>检验学习成果</p>
+                        <button class="start-btn" onclick="startLesson(7)">开始测试</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="lessons-page" class="page">
+                <div class="lesson-container">
+                    <div class="lesson-header">
+                        <button class="back-btn" onclick="showPage('home')">← 返回</button>
+                        <h2 id="lesson-title">课程标题</h2>
+                    </div>
+
+                    <div class="lesson-content">
+                        <div class="alphabet-grid" id="alphabet-grid"></div>
+
+                        <div class="word-examples">
+                            <h3>单词示例</h3>
+                            <div id="word-examples-container"></div>
+                        </div>
+
+                        <div class="practice-section">
+                            <h3>练习</h3>
+                            <div id="practice-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="practice-page" class="page">
+                <div class="practice-container">
+                    <h2>🎮 趣味练习</h2>
+
+                    <div class="game-selection">
+                        <div class="game-card" onclick="startGame('matching')">
+                            <h3>🔤 字母配对</h3>
+                            <p>找出相同的字母</p>
+                        </div>
+
+                        <div class="game-card" onclick="startGame('spelling')">
+                            <h3>✏️ 拼写挑战</h3>
+                            <p>听音拼写单词</p>
+                        </div>
+
+                        <div class="game-card" onclick="startGame('quiz')">
+                            <h3>❓ 趣味问答</h3>
+                            <p>测试你的知识</p>
+                        </div>
+                    </div>
+
+                    <div id="game-area" class="game-area hidden"></div>
+                </div>
+            </section>
+
+            <section id="progress-page" class="page">
+                <div class="progress-container">
+                    <h2>📊 学习进度</h2>
+
+                    <div class="progress-stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="total-lessons">0</div>
+                            <div class="stat-label">已完成课程</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-number" id="total-score">0</div>
+                            <div class="stat-label">获得积分</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-number" id="streak-days">0</div>
+                            <div class="stat-label">连续学习天数</div>
+                        </div>
+                    </div>
+
+                    <div class="progress-bar-container">
+                        <h3>整体进度</h3>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="overall-progress"></div>
+                        </div>
+                        <p id="progress-text">0%</p>
+                    </div>
+
+                    <div class="achievements">
+                        <h3>🏆 成就徽章</h3>
+                        <div class="badges-container" id="badges-container"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>💡 每天坚持学习，7天掌握英文拼音！</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
