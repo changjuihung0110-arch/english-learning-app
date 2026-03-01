@@ -131,7 +131,7 @@ function updateBadges() {
         { id: 'first_lesson', icon: '🎯', name: '初学者', condition: userProgress.completedLessons.length >= 1 },
         { id: 'half_way', icon: '🌟', name: '半程达人', condition: userProgress.completedLessons.length >= 3 },
         { id: 'almost_there', icon: '🚀', name: '即将完成', condition: userProgress.completedLessons.length >= 5 },
-        { id: 'master', icon: '👑', name: '拼音大师', condition: userProgress.completedLessons.length >= 7 },
+        { id: 'master', icon: '👑', name: '拼读大师', condition: userProgress.completedLessons.length >= 7 },
         { id: 'streak_3', icon: '🔥', name: '坚持3天', condition: userProgress.streakDays >= 3 },
         { id: 'score_100', icon: '💯', name: '百分百', condition: userProgress.score >= 100 }
     ];
