@@ -1,39 +1,39 @@
 const alphabetData = {
     vowels: [
-        { letter: 'A', phonetic: '/eɪ/', words: ['Apple', 'Ant', 'Alligator'] },
-        { letter: 'E', phonetic: '/iː/', words: ['Elephant', 'Egg', 'Eye'] },
-        { letter: 'I', phonetic: '/aɪ/', words: ['Ice cream', 'Igloo', 'Insect'] },
-        { letter: 'O', phonetic: '/əʊ/', words: ['Orange', 'Octopus', 'Owl'] },
-        { letter: 'U', phonetic: '/juː/', words: ['Umbrella', 'Unicorn', 'Up'] }
+        { letter: 'A', phonetic: '/æ/', word: 'apple' },
+        { letter: 'E', phonetic: '/e/', word: 'egg' },
+        { letter: 'I', phonetic: '/ɪ/', word: 'igloo' },
+        { letter: 'O', phonetic: '/ɒ/', word: 'orange' },
+        { letter: 'U', phonetic: '/ʌ/', word: 'umbrella' }
     ],
     consonants1: [
-        { letter: 'B', phonetic: '/biː/', words: ['Ball', 'Bear', 'Butterfly'] },
-        { letter: 'C', phonetic: '/siː/', words: ['Cat', 'Car', 'Cake'] },
-        { letter: 'D', phonetic: '/diː/', words: ['Dog', 'Duck', 'Dolphin'] },
-        { letter: 'F', phonetic: '/ef/', words: ['Fish', 'Frog', 'Flower'] },
-        { letter: 'G', phonetic: '/dʒiː/', words: ['Giraffe', 'Goat', 'Grapes'] }
+        { letter: 'B', phonetic: '/b/', word: 'ball' },
+        { letter: 'C', phonetic: '/k/', word: 'cat' },
+        { letter: 'D', phonetic: '/d/', word: 'dog' },
+        { letter: 'F', phonetic: '/f/', word: 'fish' },
+        { letter: 'G', phonetic: '/g/', word: 'goat' }
     ],
     consonants2: [
-        { letter: 'H', phonetic: '/eɪtʃ/', words: ['Horse', 'House', 'Heart'] },
-        { letter: 'J', phonetic: '/dʒeɪ/', words: ['Jellyfish', 'Jungle', 'Juice'] },
-        { letter: 'K', phonetic: '/keɪ/', words: ['Kangaroo', 'Kite', 'Key'] },
-        { letter: 'L', phonetic: '/el/', words: ['Lion', 'Lemon', 'Leaf'] },
-        { letter: 'M', phonetic: '/em/', words: ['Monkey', 'Moon', 'Mango'] }
+        { letter: 'H', phonetic: '/h/', word: 'hat' },
+        { letter: 'J', phonetic: '/dʒ/', word: 'jam' },
+        { letter: 'K', phonetic: '/k/', word: 'kite' },
+        { letter: 'L', phonetic: '/l/', word: 'leg' },
+        { letter: 'M', phonetic: '/m/', word: 'mouse' }
     ],
     consonants3: [
-        { letter: 'N', phonetic: '/en/', words: ['Nest', 'Nose', 'Nut'] },
-        { letter: 'P', phonetic: '/piː/', words: ['Penguin', 'Panda', 'Pig'] },
-        { letter: 'Q', phonetic: '/kjuː/', words: ['Queen', 'Quilt', 'Question'] },
-        { letter: 'R', phonetic: '/ɑːr/', words: ['Rabbit', 'Rainbow', 'Rose'] },
-        { letter: 'S', phonetic: '/es/', words: ['Snake', 'Sun', 'Star'] }
+        { letter: 'N', phonetic: '/n/', word: 'nose' },
+        { letter: 'P', phonetic: '/p/', word: 'pig' },
+        { letter: 'Q', phonetic: '/kw/', word: 'queen' },
+        { letter: 'R', phonetic: '/r/', word: 'rabbit' },
+        { letter: 'S', phonetic: '/s/', word: 'sun' }
     ],
     consonants4: [
-        { letter: 'T', phonetic: '/tiː/', words: ['Tiger', 'Tree', 'Train'] },
-        { letter: 'V', phonetic: '/viː/', words: ['Violin', 'Van', 'Vase'] },
-        { letter: 'W', phonetic: '/ˈdʌbəl.juː/', words: ['Whale', 'Water', 'Wolf'] },
-        { letter: 'X', phonetic: '/eks/', words: ['X-ray', 'Box', 'Fox'] },
-        { letter: 'Y', phonetic: '/waɪ/', words: ['Yellow', 'Yo-yo', 'Yak'] },
-        { letter: 'Z', phonetic: '/ziː/', words: ['Zebra', 'Zoo', 'Zero'] }
+        { letter: 'T', phonetic: '/t/', word: 'tiger' },
+        { letter: 'V', phonetic: '/v/', word: 'van' },
+        { letter: 'W', phonetic: '/w/', word: 'whale' },
+        { letter: 'X', phonetic: '/ks/', word: 'box' },
+        { letter: 'Y', phonetic: '/j/', word: 'yellow' },
+        { letter: 'Z', phonetic: '/z/', word: 'zip' }
     ]
 };
 
@@ -179,27 +179,21 @@ function startLesson(day) {
     practiceContainer.innerHTML = '';
     
     if (lesson.letters.length > 0) {
+        alphabetGrid.innerHTML = '<div class="phonics-notice">💡 在自然拼读中，这些字母的发音和平时念的字母表不同哦！<br>例如：A 发 /æ/，像 apple 开头的音；B 发 /b/，像 ball 开头的音</div>';
+        
         lesson.letters.forEach(item => {
             const card = document.createElement('div');
             card.className = 'alphabet-card';
             card.innerHTML = `
                 <div class="letter">${item.letter}</div>
                 <div class="phonetic">${item.phonetic}</div>
+                <div class="word">${item.word}</div>
             `;
-            card.onclick = () => speak(item.letter);
+            card.onclick = () => speak(item.word);
             alphabetGrid.appendChild(card);
-            
-            item.words.forEach(word => {
-                const wordCard = document.createElement('div');
-                wordCard.className = 'word-card';
-                wordCard.innerHTML = `
-                    <span class="word">${word}</span>
-                    <span class="meaning">点击发音</span>
-                `;
-                wordCard.onclick = () => speak(word);
-                wordExamplesContainer.appendChild(wordCard);
-            });
         });
+        
+        wordExamplesContainer.innerHTML = '<p style="color: #666; font-size: 1.1em;">👆 点击卡片听发音</p>';
         
         practiceContainer.innerHTML = `
             <h4>练习：点击字母听发音，然后跟读</h4>

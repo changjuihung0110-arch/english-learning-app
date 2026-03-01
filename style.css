@@ -217,6 +217,25 @@ header h1 {
 .alphabet-card .phonetic {
     font-size: 1.2em;
     color: #666;
+    margin-bottom: 8px;
+}
+
+.alphabet-card .word {
+    font-size: 1em;
+    color: #667eea;
+    font-weight: bold;
+    font-style: italic;
+}
+
+.phonics-notice {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    font-size: 1.1em;
+    color: #333;
+    line-height: 1.6;
+    text-align: center;
 }
 
 .word-examples {
